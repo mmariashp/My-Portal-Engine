@@ -51,4 +51,5 @@ typedef struct		s_plyer
 int 				Scaler_Next(struct Scaler* i);
 void 					textLine(int x, int y1,int y2, struct Scaler ty,unsigned txtx, SDL_Surface *surface, SDL_Surface *image);
 
+
 #endif

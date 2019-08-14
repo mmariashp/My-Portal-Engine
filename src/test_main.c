@@ -184,7 +184,7 @@ void 			draw_world(t_sector *sec, t_wall wall, t_player player, t_sdl *sdl, t_dr
 	if (wall.start.y <= 0 && wall.end.y <= 0)
 		return ;
 
-	float scaleL;
+	int scaleL;
     if(fabsf(cp.start.x - cp.end.x) > fabsf(cp.start.y - cp.end.y))
         scaleL = fabsf(cp.start.x - cp.end.x) / 5.0f;
     else
@@ -262,24 +262,6 @@ void 			draw_world(t_sector *sec, t_wall wall, t_player player, t_sdl *sdl, t_dr
 	//	SDL_SetRenderDrawColor(sdl->ren, 73, 52, 0, 255);
 	//	SDL_RenderDrawLine(sdl->ren, x, cyb, x, data.ybottom[x]);
 
-		/*		for(int y=ytop[x]; y<=ybottom[x]; ++y)
-        {
-            if (y >= cya && y <= cyb) {
-				y = cyb;
-				continue;
-			}
-            float 	hei;
-            float 	mapx, mapz;
-			hei = y < cya ? yceil: yfloor;
-            CeilingFloorScreenCoordinatesToMapCoordinates(hei, x, y,mapx, mapz);
-            unsigned tx = (mapx * 50), txtz = (mapz * 50);
-            //printf("%d\n%d\n", txtx, txtz);
-            int *floorPix = (int*)sectors->floor_tex->pixels;
-            int *surfacePix = (int*)sdl->surf->pixels;
-            int pel = floorPix[tx % sectors->floor_tex->w + (txtz % sectors->floor_tex->h) * sectors->floor_tex->w];
-            surfacePix[y * W + x] = getpixel(sectors->floor_tex, tx % sectors->floor_tex->w, txtz % sectors->floor_tex->h);
-        }
-	*/
 		vline(sdl->surf, x, cyb, data.ybottom[x], 73, 52, 0);
 		if (wall.type != empty_wall)
 		{
@@ -506,12 +488,26 @@ void			game_loop(t_sdl *sdl, t_player player, t_sector *sectors)
 {
 	int			run;
 	SDL_Texture *tex;
+	t_timer				timer;
+	char				str[100];
+	SDL_Texture			*text;
 
 	player.cos_angl = cos(player.angle);
 	player.sin_angl = sin(player.angle);
 	run = 1;
+	sdl->frame_id = 0;
+    timer = init_timer();
+    start_timer(&timer);
+	SDL_Surface *textSurface;
 	while(run)
 	{
+		if((sdl->fps = (float)sdl->frame_id / (get_ticks(timer) / 1000.f)) > 2000000)
+            sdl->fps = 0;
+		sdl->frame_id++;
+		sprintf(str, "fps:  %f", sdl->fps);
+		printf("got fps = %f\n", sdl->fps);
+		text = make_color_text(sdl->ren, str, "VCR_OSD_MONO_1.001.ttf", 100, (SDL_Color){.a = 250, .r = 255, .g = 255, .b = 255});
+		
 		SDL_SetRenderDrawColor(sdl->ren, 0, 0, 0, 255);
 		SDL_RenderClear(sdl->ren);
 		SDL_FillRect(sdl->surf, NULL, 0x00);
@@ -522,6 +518,8 @@ void			game_loop(t_sdl *sdl, t_player player, t_sector *sectors)
 			sdl_render(sdl->ren, tex, NULL, NULL);
 			SDL_DestroyTexture(tex);
 	//	}
+		SDL_RenderCopy(sdl->ren, text, NULL, &(SDL_Rect){ 20, 20, 150, 55});
+		SDL_DestroyTexture(text);
 		SDL_RenderPresent(sdl->ren);
 		run = hook_event(&player);
 	}
